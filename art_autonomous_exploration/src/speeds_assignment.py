@@ -12,12 +12,12 @@ from sonar_data_aggregator import SonarDataAggregator
 from laser_data_aggregator import LaserDataAggregator
 from navigation import Navigation
 
-# Class for assigning the robot speeds 
+# Class for assigning the robot speeds
 class RobotController:
 
     # Constructor
     def __init__(self):
-        
+
       # Debugging purposes
       self.print_velocities = rospy.get_param('print_velocities')
 
@@ -43,7 +43,7 @@ class RobotController:
 
     # This function publishes the speeds and moves the robot
     def publishSpeeds(self, event):
-        
+
       # Produce speeds
       self.produceSpeeds()
 
@@ -52,7 +52,7 @@ class RobotController:
       twist.linear.x = self.linear_velocity
       twist.linear.y = 0
       twist.linear.z = 0
-      twist.angular.x = 0 
+      twist.angular.x = 0
       twist.angular.y = 0
       twist.angular.z = self.angular_velocity
 
@@ -69,16 +69,37 @@ class RobotController:
       scan = self.laser_aggregation.laser_scan
       linear  = 0
       angular = 0
+
       ############################### NOTE QUESTION ############################
       # Check what laser_scan contains and create linear and angular speeds
       # for obstacle avoidance
 
+      leng = len(scan)                                          # Number of scans
+      angle_min = self.laser_aggregation.angle_min              # Minimum angle scanned (rad)
+      angle_increment = self.laser_aggregation.angle_increment  # Angle between different scans (rad)
+
+      # Calculate the effect every single scan has on the path that the robot is going to follow.
+      # The closer it is, the bigger the effect. We use sin and cos so that we can get positive or
+      # negative values, in order for the robot to move front/back and right/left
+      for i in range(0, leng):
+          linear -= math.cos(angle_min + i*angle_increment) / (scan[i]*scan[i])
+          angular -= math.sin(angle_min + i*angle_increment) / (0.5*scan[i]*scan[i])
+
+      # Get the average value of all scans' effect
+      linear = 0.3 + linear / leng  # In this case add it to something constant
+      angular = angular / leng
+
+      # Both speeds must have values in the range [-0.3, 0.3]
+      linear = min(max(linear, -0.3), 0.3)
+      angular = min(max(angular, -0.3), 0.3)
+
       ##########################################################################
+
       return [linear, angular]
 
     # Combines the speeds into one output using a motor schema approach
     def produceSpeeds(self):
- 
+
       # Produce target if not existent
       if self.move_with_target == True and \
               self.navigation.target_exists == False:
@@ -98,11 +119,11 @@ class RobotController:
 
       # Get the submodule's speeds
       [l_laser, a_laser] = self.produceSpeedsLaser()
-      
+
       # You must fill these
       self.linear_velocity  = 0
       self.angular_velocity = 0
-      
+
       if self.move_with_target == True:
         [l_goal, a_goal] = self.navigation.velocitiesToNextSubtarget()
         ############################### NOTE QUESTION ############################
@@ -114,7 +135,10 @@ class RobotController:
         ############################### NOTE QUESTION ############################
         # Implement obstacle avoidance here using the laser speeds.
         # Hint: Subtract them from something constant
-        pass
+
+        self.linear_velocity = l_laser
+        self.angular_velocity = a_laser
+
         ##########################################################################
 
     # Assistive functions
