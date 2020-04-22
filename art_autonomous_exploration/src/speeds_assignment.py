@@ -83,7 +83,8 @@ class RobotController:
       # negative values, in order for the robot to move front/back and right/left
       for i in range(0, leng):
           linear -= math.cos(angle_min + i*angle_increment) / scan[i]**2
-          angular -= math.sin(angle_min + i*angle_increment) / (0.5*scan[i]*scan[i])
+          angular -= math.sin(angle_min + i*angle_increment) / (0.5*scan[i]**2)
+
       # Get the average value of all scans' effect
       linear = 0.3 + linear / leng  # In this case add it to something constant
       angular = angular / leng
@@ -128,8 +129,15 @@ class RobotController:
         ############################### NOTE QUESTION ############################
         # You must combine the two sets of speeds. You can use motor schema,
         # subsumption of whatever suits your better.
-        self.linear_velocity = l_goal
-        self.angular_velocity = a_goal
+
+        # We use a motor schema in order to combine velocities from obstacle
+        # avoidance and path following procedure
+        c_l = 0.2
+        c_a= 0.2
+
+        self.linear_velocity = l_goal + c_l*l_laser
+        self.angular_velocity = a_goal + c_a*a_laser
+
         ##########################################################################
       else:
         ############################### NOTE QUESTION ############################
