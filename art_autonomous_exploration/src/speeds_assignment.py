@@ -81,10 +81,12 @@ class RobotController:
       # Calculate the effect every single scan has on the path that the robot is going to follow.
       # The closer it is, the bigger the effect. We use sin and cos so that we can get positive or
       # negative values, in order for the robot to move front/back and right/left
-      for i in range(0, leng):
-          linear -= math.cos(angle_min + i*angle_increment) / (scan[i]*scan[i])
+      for i in range(134, 534):
+          linear -= math.cos(angle_min + i*angle_increment) / scan[i]**2
+      for i in range(0, 200):
           angular -= math.sin(angle_min + i*angle_increment) / (0.5*scan[i]*scan[i])
-
+      for i in range(500, leng):
+          angular -= math.sin(angle_min + i*angle_increment) / (0.5*scan[i]*scan[i])
       # Get the average value of all scans' effect
       linear = 0.3 + linear / leng  # In this case add it to something constant
       angular = angular / leng
@@ -129,7 +131,8 @@ class RobotController:
         ############################### NOTE QUESTION ############################
         # You must combine the two sets of speeds. You can use motor schema,
         # subsumption of whatever suits your better.
-
+        self.linear_velocity = l_goal
+        self.angular_velocity = a_goal
         ##########################################################################
       else:
         ############################### NOTE QUESTION ############################
