@@ -96,9 +96,9 @@ class TargetSelection:
                     origin['y'] / resolution\
                     ]
         g_robot_pose = [rx,ry]
-        # If nodes > 15 the calculation time-cost is very big
-        # In order to avoid time-reset we set a maximum threshold of 15 possible targets
-        # by sampling the topological graph's nodes
+        # If nodes > 25 the calculation time-cost is very big
+        # In order to avoid time-reset we perform sampling on
+        # the nodes list and take a half-sized sample 
         for i in range(0,len(nodes)):
             nodes[i].append(i)
         if (len(nodes) > 25):
